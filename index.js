@@ -1,6 +1,11 @@
 require('dotenv').config();
+const { MongoClient } = require('mongodb');
+
+const url = 'mongodb://localhost:27017/';
+const mongoClient = new MongoClient(url);
 
 const { Telegraf } = require('telegraf');
+const runMongoConnection = require('./config/db');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -35,11 +40,25 @@ const qwertyArray = {
   b: 'и',
   n: 'т',
   m: 'ь',
-  ',': 'б',
+  ',': ',',
   '.': 'ю',
+  '?': '?',
+  '&': '?',
+  '!': '!',
+  0: '0',
+  1: '1',
+  2: '2',
+  3: '3',
+  4: '4',
+  5: '5',
+  6: '6',
+  7: '7',
+  8: '8',
+  9: '9',
 };
 
 const test = Object.entries(qwertyArray);
+const ukrWorlds = Object.values(qwertyArray);
 
 bot.on('text', (ctx) => {
   const userMessage = ctx.message.text;
@@ -48,21 +67,31 @@ bot.on('text', (ctx) => {
   const messID = ctx.message.message_id;
   const chatID = ctx.message.chat.id;
 
-  const testBuff = [];
+  let num = 0;
+  if (userMessage.includes(ukrWorlds.forEach((x) => x))) {
+    console.log('It is ukr text');
+  } else {
+    const testBuff = [];
 
-  newUserMessage.forEach((element) => {
-    if (element === ' ') {
-      testBuff.push(' ');
-    }
-    test.forEach((key) => {
-      if (element.toLowerCase() === key[0]) {
-        testBuff.push(key[1]);
+    newUserMessage.forEach((element) => {
+      if (element === ' ') {
+        testBuff.push(' ');
       }
+      test.forEach((key) => {
+        if (element.toLowerCase() === key[0]) {
+          if (element === ',' && num > 2) {
+            key[1] = 'б';
+            testBuff.push(key[1]);
+          }
+          testBuff.push(key[1]);
+          num += 1;
+        }
+      });
     });
-  });
-
-  // ctx.telegram.deleteMessage(chatID, messID);
-  ctx.telegram.sendMessage(chatID, testBuff.join(''));
+    // ctx.telegram.sendMessage(chatID, testBuff.join(''));
+    console.log(ctx.message.from);
+    runMongoConnection(MongoClient, url, mongoClient, ctx.message.from);
+  }
 });
 
 bot.launch();
